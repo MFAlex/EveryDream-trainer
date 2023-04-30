@@ -1,4 +1,4 @@
-**EveryDream 2.0 is now live** https://github.com/victorchall/EveryDream2trainer
+# **EveryDream 2.0 is now live** https://github.com/victorchall/EveryDream2trainer
 
 The updated 2.0 repo is a from-scratch rewrite to allow easier future development and will have more features long term and lower VRAM use.
 
