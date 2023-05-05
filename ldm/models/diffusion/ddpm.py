@@ -1534,3 +1534,66 @@ class Layout2ImgDiffusion(LatentDiffusion):
         cond_img = torch.stack(bbox_imgs, dim=0)
         logs['bbox_image'] = cond_img
         return logs
+
+class MFLatentDiffusion(LatentDiffusion):
+    def __init__(self,
+                 first_stage_config,
+                 cond_stage_config,
+                 num_timesteps_cond=None,
+                 cond_stage_key="image",
+                 cond_stage_trainable=False,
+                 concat_mode=True,
+                 cond_stage_forward=None,
+                 conditioning_key=None,
+                 scale_factor=1.0,
+                 scale_by_std=False,
+                 scheduler_config=None,
+                 optimizer="adamw",
+                 allow_tf32=False,
+                 *args, **kwargs):
+        super().__init__(first_stage_config=first_stage_config,
+                         cond_stage_config=cond_stage_config,
+                         num_timesteps_cond=num_timesteps_cond,
+                         cond_stage_key=cond_stage_key,
+                         cond_stage_trainable=cond_stage_trainable,
+                         concat_mode=concat_mode,
+                         cond_stage_forward=cond_stage_forward,
+                         conditioning_key=conditioning_key,
+                         scale_factor=scale_factor,
+                         scale_by_std=scale_by_std,
+                         scheduler_config=scheduler_config,
+                         *args, **kwargs)
+        assert optimizer in ["adamw", "8bit-adamw", "lion", "8bit-lion", "adam", "8bit-adam"]
+        self.optimizer = optimizer
+
+    def configure_optimizers(self):
+        lr = self.learning_rate
+
+        params = list(self.model.parameters())
+        if self.cond_stage_trainable:
+            print(f"{self.__class__.__name__}: Also optimizing conditioner params!")
+            params = params + list(self.cond_stage_model.parameters())
+        if self.learn_logvar:
+            print('Diffusion model optimizing logvar')
+            params.append(self.logvar)
+
+        if self.optimizer in ["8bit-adamw", "lion", "8bit-lion", "8bit-adam"]:
+            import bitsandbytes as bnb
+            if self.optimizer == "8bit-adamw":
+                opt = bnb.optim.AdamW8bit(params, lr=lr)
+            elif self.optimizer == "lion":
+                opt = bnb.optim.Lion(params, lr=lr)
+            elif self.optimizer == "8bit-lion":
+                opt = bnb.optim.Lion8bit(params, lr=lr)
+            elif self.optimizer == "8bit-adam":
+                opt = bnb.optim.Adam8bit(params, lr=lr)
+        elif self.optimizer in ["adamw", "adam"]:
+            if self.optimizer == "adamw":
+                opt = torch.optim.AdamW(params, lr=lr)
+            else:
+                opt = torch.optim.Adam(params, lr=lr)
+        else:
+            print("UNKNOWN OPTIMIZER. Defaulting to AdamW")
+            opt = torch.optim.AdamW(params, lr=lr)
+
+        return opt
