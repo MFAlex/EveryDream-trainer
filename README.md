@@ -1,8 +1,6 @@
-# **EveryDream 2.0 is now live** https://github.com/victorchall/EveryDream2trainer
+## MFAlex Everydream
 
-The updated 2.0 repo is a from-scratch rewrite with significant improvements across the board including greatly increased performance and feature set.
-
-Below is the docs for EveryDream 1.0 (this repo), but really, use the new repo above.
+This repository represents efforts to improve the compvis, stabilityai & dreambooth trainer for stable diffusion.
 
 ## Every Dream trainer for Stable Diffusion
 
@@ -36,13 +34,7 @@ You will need Anaconda or Miniconda to run locally on your own GPU.
 
 1. Clone the repo:  `git clone https://www.github.com/victorchall/everydream-trainer.git`
 2. Create a new conda environment with the provided environment.yaml file: `conda env create -f environment.yaml`
-3. Activate the environment: `conda activate everydream`
-
-*Please note other repos are using older versions of some packages like torch, torchvision, and transformers that are known to be less VRAM efficient and cause problems.  Please make a new conda environment for this repo and use the provided environment.yaml file.  I will be updating packages as work progresses as well.  Watch #change-log in the discord.*
-
-### Docker option
-
-Entmike has created a dockerfile for EveryDream tools and trainer available here: https://github.com/entmike/docker-images/tree/main/everydream
+3. Activate the environment: `conda activate everydream-mf`
 
 ## Techniques
 
@@ -136,7 +128,7 @@ An example comand to start training: **make sure you activate the conda environm
 
     conda activate everydream
 
-    python main.py --base configs/stable-diffusion/v1-finetune_everydream.yaml -t --actual_resume sd_v1-5_vae.ckpt -n MyProjectName --data_root training_samples\MyProject
+    python main.py --base configs/stable-diffusion/mfalex.yaml -t --actual_resume sd_v1-5_vae.ckpt -n MyProjectName --data_root training_samples\MyProject
 
 In the above, the source training data is expected to be laid out in subfolders of training_samples\MyProject as described in above sections. It will resume from the checkpoint named "sd_v1-5_vae.ckpt" but you can change this to most Stable Diffusion checkpoints (ex. 1.4, 1.5, 1.5 + new vae, WD, or others that people have shared online). Inpainting model is not yet supported.  "-n MyProjectName" is merely a name for the folder where logs will be written during training, which appear under /logs. 
 
