@@ -1566,6 +1566,9 @@ class MFLatentDiffusion(LatentDiffusion):
         assert optimizer in ["adamw", "8bit-adamw", "lion", "8bit-lion", "adam", "8bit-adam"]
         self.optimizer = optimizer
 
+        if allow_tf32:
+            torch.backends.cuda.matmul.allow_tf32 = True
+
     def configure_optimizers(self):
         lr = self.learning_rate
 
