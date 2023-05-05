@@ -1563,7 +1563,7 @@ class MFLatentDiffusion(LatentDiffusion):
                          scale_by_std=scale_by_std,
                          scheduler_config=scheduler_config,
                          *args, **kwargs)
-        assert optimizer in ["adamw", "8bit-adamw", "lion", "8bit-lion", "adam", "8bit-adam"]
+        assert optimizer in ["adamw", "8bit-adamw", "lion", "8bit-lion", "adam", "8bit-adam", "lion-pytorch"]
         self.optimizer = optimizer
 
         if allow_tf32:
@@ -1590,6 +1590,9 @@ class MFLatentDiffusion(LatentDiffusion):
                 opt = bnb.optim.Lion8bit(params, lr=lr)
             elif self.optimizer == "8bit-adam":
                 opt = bnb.optim.Adam8bit(params, lr=lr)
+        elif self.optimizer == "lion-pytorch":
+            from lion_pytorch import Lion
+            opt = Lion(params, lr=lr)
         elif self.optimizer in ["adamw", "adam"]:
             if self.optimizer == "adamw":
                 opt = torch.optim.AdamW(params, lr=lr)
