@@ -18,7 +18,7 @@ model:
     use_ema: False
     unfreeze_model: True
     model_lr: 1.0e-6
-    optimizer: "8bit-adamw"
+    optimizer: "8bit-lion"
     allow_tf32: True
 
     unet_config:
