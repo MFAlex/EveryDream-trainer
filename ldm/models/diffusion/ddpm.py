@@ -1549,6 +1549,7 @@ class MFLatentDiffusion(LatentDiffusion):
                  scale_by_std=False,
                  scheduler_config=None,
                  optimizer="adamw",
+                 optimizer_weight_decay=0.0,
                  allow_tf32=False,
                  *args, **kwargs):
         super().__init__(first_stage_config=first_stage_config,
@@ -1565,6 +1566,7 @@ class MFLatentDiffusion(LatentDiffusion):
                          *args, **kwargs)
         assert optimizer in ["adamw", "8bit-adamw", "lion", "8bit-lion", "adam", "8bit-adam", "lion-pytorch"]
         self.optimizer = optimizer
+        self.optimizer_weight_decay = optimizer_weight_decay
         if allow_tf32:
             torch.backends.cuda.matmul.allow_tf32 = True
             torch.backends.cudnn.allow_tf32 = True
@@ -1586,23 +1588,23 @@ class MFLatentDiffusion(LatentDiffusion):
         if self.optimizer in ["8bit-adamw", "lion", "8bit-lion", "8bit-adam"]:
             import bitsandbytes as bnb
             if self.optimizer == "8bit-adamw":
-                opt = bnb.optim.AdamW8bit(params, lr=lr)
+                opt = bnb.optim.AdamW8bit(params, lr=lr, weight_decay=self.optimizer_weight_decay)
             elif self.optimizer == "lion":
-                opt = bnb.optim.Lion(params, lr=lr)
+                opt = bnb.optim.Lion(params, lr=lr, weight_decay=self.optimizer_weight_decay)
             elif self.optimizer == "8bit-lion":
-                opt = bnb.optim.Lion8bit(params, lr=lr)
+                opt = bnb.optim.Lion8bit(params, lr=lr, weight_decay=self.optimizer_weight_decay)
             elif self.optimizer == "8bit-adam":
-                opt = bnb.optim.Adam8bit(params, lr=lr)
+                opt = bnb.optim.Adam8bit(params, lr=lr, weight_decay=self.optimizer_weight_decay)
         elif self.optimizer == "lion-pytorch":
             from lion_pytorch import Lion
-            opt = Lion(params, lr=lr)
+            opt = Lion(params, lr=lr, weight_decay=self.optimizer_weight_decay)
         elif self.optimizer in ["adamw", "adam"]:
             if self.optimizer == "adamw":
-                opt = torch.optim.AdamW(params, lr=lr)
+                opt = torch.optim.AdamW(params, lr=lr, weight_decay=self.optimizer_weight_decay)
             else:
-                opt = torch.optim.Adam(params, lr=lr)
+                opt = torch.optim.Adam(params, lr=lr, weight_decay=self.optimizer_weight_decay)
         else:
             print("UNKNOWN OPTIMIZER. Defaulting to AdamW")
-            opt = torch.optim.AdamW(params, lr=lr)
+            opt = torch.optim.AdamW(params, lr=lr, weight_decay=self.optimizer_weight_decay)
 
         return opt
