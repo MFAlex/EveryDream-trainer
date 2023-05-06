@@ -177,14 +177,6 @@ def get_parser(**parser_kwargs):
     parser.add_argument("--init_word",
         type=str, 
         help="Word to use as source for initial token embedding")
-    parser.add_argument(
-        "--disable_cudnn_determinism",
-        type=str2bool,
-        nargs="?",
-        const=False,
-        default=False,
-        help="use this flag to not enable determinism on 'scaled_dot_product_attention' and other cudnn features of pytorch 2. See https://pytorch.org/docs/master/generated/torch.nn.functional.scaled_dot_product_attention",
-    )
 
     return parser
 
@@ -528,8 +520,6 @@ if __name__ == "__main__":
             "If you want to resume training in a new log folder, "
             "use -n/--name in combination with --resume_from_checkpoint"
         )
-    if not opt.disable_cudnn_determinism:
-        torch.backends.cudnn.deterministic = True
     if opt.resume:
         if not os.path.exists(opt.resume):
             raise ValueError("Cannot find {}".format(opt.resume))
