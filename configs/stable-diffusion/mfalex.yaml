@@ -19,7 +19,7 @@ model:
     unfreeze_model: True
     model_lr: 1.0e-6
     optimizer: "8bit-lion" #adamw, 8bit-adamw, lion, 8bit-lion, adam, 8bit-adam, lion-pytorch
-    optimizer_weight_decay: 0.100,
+    optimizer_weight_decay: 0.100
     allow_tf32: True
 
     unet_config:
