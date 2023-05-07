@@ -466,7 +466,8 @@ class UNetModel(nn.Module):
         context_dim=None,                 # custom transformer support
         n_embed=None,                     # custom support for prediction of discrete ids into codebook of first stage vq model
         legacy=True,
-        attention_algorithm="vanilla"
+        attention_algorithm="vanilla",
+        gradient_checkpointing=False
     ):
         super().__init__()
         if use_spatial_transformer:
@@ -487,6 +488,7 @@ class UNetModel(nn.Module):
         if num_head_channels == -1:
             assert num_heads != -1, 'Either num_heads or num_head_channels has to be set'
 
+        self.gradient_checkpointing = gradient_checkpointing
         self.image_size = image_size
         self.in_channels = in_channels
         self.model_channels = model_channels
@@ -720,14 +722,25 @@ class UNetModel(nn.Module):
         assert (y is not None) == (
             self.num_classes is not None
         ), "must specify y if and only if the model is class-conditional"
-        hs = []
         t_emb = timestep_embedding(timesteps, self.model_channels, repeat_only=False)
         emb = self.time_embed(t_emb)
 
         if self.num_classes is not None:
             assert y.shape == (x.shape[0],)
             emb = emb + self.label_emb(y)
+        
+        return checkpoint(self._forward, (x, emb, context, *kwargs), self.parameters(), self.gradient_checkpointing)
 
+    def _forward(self, x, emb, context=None,**kwargs):
+        """
+        Apply the model to an input batch.
+        :param x: an [N x C x ...] Tensor of inputs.
+        :param timesteps: a 1-D batch of timesteps.
+        :param context: conditioning plugged in via crossattn
+        :param y: an [N] Tensor of labels, if class-conditional.
+        :return: an [N x C x ...] Tensor of outputs.
+        """
+        hs = []
         h = x.type(self.dtype)
         for module in self.input_blocks:
             h = module(h, emb, context)
