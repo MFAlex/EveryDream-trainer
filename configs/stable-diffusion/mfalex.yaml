@@ -21,6 +21,7 @@ model:
     optimizer: "8bit-lion" #adamw, 8bit-adamw, lion, 8bit-lion, adam, 8bit-adam, lion-pytorch
     optimizer_weight_decay: 0.100
     allow_tf32: True
+    offset_noise_amount: 0.025
 
     unet_config:
       target: ldm.modules.diffusionmodules.openaimodel.UNetModel

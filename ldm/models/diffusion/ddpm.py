@@ -76,6 +76,7 @@ class DDPM(pl.LightningModule):
                  use_positional_encodings=False,
                  learn_logvar=False,
                  logvar_init=0.,
+                 offset_noise_amount=0,
                  ):
         super().__init__()
         assert parameterization in ["eps", "x0"], 'currently only supporting "eps" and "x0"'
@@ -89,6 +90,7 @@ class DDPM(pl.LightningModule):
         self.channels = channels
         self.use_positional_encodings = use_positional_encodings
         self.model = DiffusionWrapper(unet_config, conditioning_key)
+        self.offset_noise_amount = offset_noise_amount
         count_params(self.model, verbose=True)
         self.use_ema = use_ema
         if self.use_ema:
@@ -282,6 +284,8 @@ class DDPM(pl.LightningModule):
 
     def q_sample(self, x_start, t, noise=None):
         noise = default(noise, lambda: torch.randn_like(x_start))
+        if self.offset_noise_amount > 0:
+            noise = noise + self.offset_noise_amount * torch.randn(x_start.shape[0], x_start.shape[1], 1, 1, device=x_start.device)
         return (extract_into_tensor(self.sqrt_alphas_cumprod, t, x_start.shape) * x_start +
                 extract_into_tensor(self.sqrt_one_minus_alphas_cumprod, t, x_start.shape) * noise)
 
@@ -454,6 +458,7 @@ class LatentDiffusion(DDPM):
                  scale_factor=1.0,
                  scale_by_std=False,
                  scheduler_config=None,
+                 offset_noise_amount=0.0,
                  *args, **kwargs):
         
         self.num_timesteps_cond = default(num_timesteps_cond, 1)
@@ -466,7 +471,7 @@ class LatentDiffusion(DDPM):
             conditioning_key = None
         ckpt_path = kwargs.pop("ckpt_path", None)
         ignore_keys = kwargs.pop("ignore_keys", [])
-        super().__init__(conditioning_key=conditioning_key, scheduler_config=scheduler_config, *args, **kwargs)
+        super().__init__(conditioning_key=conditioning_key, scheduler_config=scheduler_config, offset_noise_amount=offset_noise_amount, *args, **kwargs)
         self.concat_mode = concat_mode
         self.cond_stage_trainable = cond_stage_trainable
         self.cond_stage_key = cond_stage_key
@@ -1551,6 +1556,7 @@ class MFLatentDiffusion(LatentDiffusion):
                  optimizer="adamw",
                  optimizer_weight_decay=0.0,
                  allow_tf32=False,
+                 offset_noise_amount=0.0,
                  *args, **kwargs):
         super().__init__(first_stage_config=first_stage_config,
                          cond_stage_config=cond_stage_config,
@@ -1563,6 +1569,7 @@ class MFLatentDiffusion(LatentDiffusion):
                          scale_factor=scale_factor,
                          scale_by_std=scale_by_std,
                          scheduler_config=scheduler_config,
+                         offset_noise_amount=offset_noise_amount,
                          *args, **kwargs)
         assert optimizer in ["adamw", "8bit-adamw", "lion", "8bit-lion", "adam", "8bit-adam", "lion-pytorch"]
         self.optimizer = optimizer
