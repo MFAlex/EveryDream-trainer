@@ -62,7 +62,7 @@ model:
           - 4
           num_res_blocks: 2
           attn_resolutions: []
-          attn_type: "scaled-dot-product"
+          attn_type: "vanilla"
           dropout: 0.0
         lossconfig:
           target: torch.nn.Identity
